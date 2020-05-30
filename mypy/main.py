@@ -609,6 +609,11 @@ def process_options(args: List[str],
                              " non-overlapping types",
                         group=strictness_group)
 
+    add_invertible_flag('--disallow-unused-expressions', default=True, strict_flag=False,
+                        help="Prohibit using expressions in statement context without using their"
+                             "value",
+                        group=strictness_group)
+
     strict_help = "Strict mode; enables the following flags: {}".format(
         ", ".join(strict_flag_names))
     strictness_group.add_argument(

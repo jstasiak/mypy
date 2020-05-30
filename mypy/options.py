@@ -35,6 +35,7 @@ PER_MODULE_OPTIONS = {
     "disallow_untyped_calls",
     "disallow_untyped_decorators",
     "disallow_untyped_defs",
+    "disallow_unused_expressions",
     "follow_imports",
     "follow_imports_for_stubs",
     "ignore_errors",
@@ -110,6 +111,8 @@ class Options:
 
         # Disallow subclassing values of type 'Any'
         self.disallow_subclassing_any = False
+
+        self.disallow_unused_expressions = False
 
         # Also check typeshed for missing annotations
         self.warn_incomplete_stub = False

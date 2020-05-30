@@ -3110,7 +3110,15 @@ class TypeChecker(NodeVisitor[None], CheckerPluginInterface):
                         del partial_types[var]
 
     def visit_expression_stmt(self, s: ExpressionStmt) -> None:
-        self.expr_checker.accept(s.expr, allow_none_return=True, always_allow_any=True)
+        type_ = self.expr_checker.accept(s.expr, allow_none_return=True, always_allow_any=True)
+        proper_type = get_proper_type(type_)
+        if (self.options.disallow_unused_expressions and
+            not (self.current_node_deferred or
+                    isinstance(s.expr, (EllipsisExpr,)) or
+                    isinstance(proper_type, (NoneType, UninhabitedType)) or
+                    isinstance(proper_type, Instance) and proper_type.last_known_value
+                )):
+            self.fail("Unused expression of type '{}'".format(proper_type), s)
 
     def visit_return_stmt(self, s: ReturnStmt) -> None:
         """Type check a return statement."""
