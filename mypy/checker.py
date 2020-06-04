@@ -87,6 +87,9 @@ DEFAULT_LAST_PASS = 1  # type: Final  # Pass numbers start at 0
 DeferredNodeType = Union[FuncDef, LambdaExpr, OverloadedFuncDef, Decorator]
 FineGrainedDeferredNodeType = Union[FuncDef, MypyFile, OverloadedFuncDef]
 
+
+logger = open('stmt_logger.txt', 'w')
+
 # A node which is postponed to be processed during the next pass.
 # In normal mode one can defer functions and methods (also decorated and/or overloaded)
 # and lambda expressions. Nested functions can't be deferred -- only top-level functions
@@ -3112,13 +3115,24 @@ class TypeChecker(NodeVisitor[None], CheckerPluginInterface):
     def visit_expression_stmt(self, s: ExpressionStmt) -> None:
         type_ = self.expr_checker.accept(s.expr, allow_none_return=True, always_allow_any=True)
         proper_type = get_proper_type(type_)
-        if (self.options.disallow_unused_expressions and
-            not (self.current_node_deferred or
-                    isinstance(s.expr, (EllipsisExpr,)) or
-                    isinstance(proper_type, (NoneType, UninhabitedType)) or
-                    isinstance(proper_type, Instance) and proper_type.last_known_value
-                )):
-            self.fail("Unused expression of type '{}'".format(proper_type), s)
+        if not (self.current_node_deferred or
+                isinstance(s.expr, (EllipsisExpr,)) or
+                isinstance(proper_type, (NoneType, UninhabitedType)) or
+                isinstance(proper_type, Instance) and proper_type.last_known_value
+        ):
+            logger.write(
+                'EXPR %s -> %s in %s\n' % (
+                    type(s.expr).__name__ + (
+                        ' (%s)' % (s.expr.callee.fullname,)  # type: ignore
+                        if hasattr(s.expr, 'callee') and hasattr(s.expr.callee, 'fullname')  # type: ignore
+                        else ''
+                    ),
+                    type_,
+                    '%s:%s:%s' % (self.errors.file, s.line, s.column),
+                ),
+            )
+            if self.options.disallow_unused_expressions:
+                self.fail("Unused expression of type '{}'".format(proper_type), s)
 
     def visit_return_stmt(self, s: ReturnStmt) -> None:
         """Type check a return statement."""

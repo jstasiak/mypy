@@ -63,6 +63,8 @@ from mypy.typeops import (
 )
 import mypy.errorcodes as codes
 
+logger = open('expr_logger.txt', 'w')
+
 # Type of callback user for checking individual function arguments. See
 # check_args() below for details.
 ArgChecker = Callable[[Type,
@@ -3777,6 +3779,16 @@ class ExpressionChecker(ExpressionVisitor[Type]):
         if not self.chk.in_checked_function() or self.chk.current_node_deferred:
             return AnyType(TypeOfAny.unannotated)
         else:
+            logger.write(
+                'EXPR %s -> %s\n' % (
+                    type(node).__name__ + (
+                        ' (%s)' % (node.callee.fullname,)  # type: ignore
+                        if hasattr(node, 'callee') and hasattr(node.callee, 'fullname')  # type: ignore
+                        else ''
+                    ),
+                    typ,
+                ),
+            )
             return typ
 
     def named_type(self, name: str) -> Instance:
